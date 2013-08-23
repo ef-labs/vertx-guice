@@ -12,10 +12,10 @@ http://englishtown.mit-license.org/
 ## Configuration
 
 To configure Vert.x to use the GuiceVerticleFactory modify the langs.properties java entry like this:
-`java=com.englishtown~vertx-mod-guice~1.0.0-SNAPSHOT:com.englishtown.vertx.guice.GuiceVerticleFactory`
+`java=com.englishtown~vertx-mod-guice~1.0.0-final:com.englishtown.vertx.guice.GuiceVerticleFactory`
 
 or set a system property when running:
-`-Dvertx.langs.java=com.englishtown~vertx-mod-guice~1.0.0-SNAPSHOT:com.englishtown.vertx.guice.GuiceVerticleFactory`
+`-Dvertx.langs.java=com.englishtown~vertx-mod-guice~1.0.0-final:com.englishtown.vertx.guice.GuiceVerticleFactory`
 
 
 ## Example
