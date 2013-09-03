@@ -10,7 +10,7 @@
 
     <artifactId>vertx-mod-guice</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.0-final</version>
 
     <description>Provides a VerticleFactory that uses Guice for dependency injection.</description>
     <inceptionYear>2013</inceptionYear>
