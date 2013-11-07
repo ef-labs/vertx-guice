@@ -23,7 +23,11 @@
 
 package com.englishtown.vertx.guice;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
@@ -33,27 +37,49 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Created with IntelliJ IDEA.
- * User: adriangonzalez
- * Date: 4/5/13
- * Time: 3:39 PM
- * To change this template use File | Settings | File Templates.
+ * Unit tests for {@link GuiceVerticleFactory}
  */
+@RunWith(MockitoJUnitRunner.class)
 public class GuiceVerticleFactoryTest {
+
+    GuiceVerticleFactory factory = new GuiceVerticleFactory();
+    JsonObject config = new JsonObject();
+
+    @Mock
+    Vertx vertx;
+    @Mock
+    Container container;
+    @Mock
+    Logger logger;
+
+    @Before
+    public void setUp() {
+        when(container.config()).thenReturn(config);
+        when(container.logger()).thenReturn(logger);
+    }
 
     @Test
     public void testCreateVerticle() throws Exception {
 
-        GuiceVerticleFactory factory = new GuiceVerticleFactory();
-
-        Logger logger = mock(Logger.class);
-        Vertx vertx = mock(Vertx.class);
-
-        Container container = mock(Container.class);
-        when(container.logger()).thenReturn(logger);
+        config.putString("guice_binder", "com.englishtown.vertx.guice.BootstrapBinder");
 
         factory.init(vertx, container, this.getClass().getClassLoader());
         factory.createVerticle("com.englishtown.vertx.guice.TestGuiceVerticle");
+
+    }
+
+    @Test
+    public void testReportException() throws Exception {
+
+        factory.reportException(null, null);
+        factory.reportException(logger, new RuntimeException());
+
+    }
+
+    @Test
+    public void testClose() throws Exception {
+
+        factory.close();
 
     }
 
