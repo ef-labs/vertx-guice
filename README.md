@@ -12,11 +12,18 @@ http://englishtown.mit-license.org/
 ## Configuration
 
 To configure Vert.x to use the GuiceVerticleFactory modify the langs.properties java entry like this:
-`java=com.englishtown~vertx-mod-guice~1.0.0-final:com.englishtown.vertx.guice.GuiceVerticleFactory`
+`java=com.englishtown~vertx-mod-guice~1.3.0-SNAPSHOT:com.englishtown.vertx.guice.GuiceVerticleFactory`
 
 or set a system property when running:
-`-Dvertx.langs.java=com.englishtown~vertx-mod-guice~1.0.0-final:com.englishtown.vertx.guice.GuiceVerticleFactory`
+`-Dvertx.langs.java=com.englishtown~vertx-mod-guice~1.3.0-SNAPSHOT:com.englishtown.vertx.guice.GuiceVerticleFactory`
 
+Either provide a com.englishtown.vertx.guice.BootstrapBinder that implements com.google.inject.Module, or via vert.x config, provide a custom class name.
+
+```json
+{
+    "guice_binder": "my.custom.bootstrap.Binder"
+}
+```
 
 ## Example
 

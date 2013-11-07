@@ -47,4 +47,18 @@ public class IntegrationTestVerticle extends TestVerticle {
         });
 
     }
+
+    @Test
+    public void testDependencyInjection_Uncompiled() throws Exception {
+
+        container.deployVerticle("UncompiledDIVerticle.java", new Handler<AsyncResult<String>>() {
+            @Override
+            public void handle(AsyncResult<String> result) {
+                assertTrue(result.succeeded());
+                testComplete();
+            }
+        });
+
+    }
+
 }

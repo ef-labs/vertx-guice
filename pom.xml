@@ -10,7 +10,7 @@
 
     <artifactId>vertx-mod-guice</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.0-final</version>
+    <version>1.3.0-final</version>
 
     <description>Provides a VerticleFactory that uses Guice for dependency injection.</description>
     <inceptionYear>2013</inceptionYear>
@@ -18,6 +18,8 @@
     <properties>
         <!--Dependency versions-->
         <guice.version>3.0</guice.version>
+        <!--Plugin versions-->
+        <maven.jgitflow.plugin.version>1.0-alpha22</maven.jgitflow.plugin.version>
     </properties>
 
     <dependencies>
@@ -59,7 +61,7 @@
     <scm>
         <connection>scm:git:ssh://git@github.com/englishtown/${project.artifactId}.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/englishtown/${project.artifactId}.git</developerConnection>
-        <tag>1.2.0-final</tag>
+        <tag>HEAD</tag>
         <url>https://github.com/englishtown/${project.artifactId}</url>
     </scm>
 
