@@ -18,6 +18,8 @@
     <properties>
         <!--Dependency versions-->
         <guice.version>3.0</guice.version>
+        <!--Plugin versions-->
+        <maven.jgitflow.plugin.version>1.0-alpha22</maven.jgitflow.plugin.version>
     </properties>
 
     <dependencies>
