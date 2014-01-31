@@ -27,10 +27,13 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.vertx.java.core.Future;
+import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.platform.Container;
 import org.vertx.java.platform.Verticle;
 import org.vertx.java.platform.impl.java.CompilingClassLoader;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,8 +116,15 @@ public class GuiceVerticleLoader extends Verticle {
         Module bootstrap = null;
 
         try {
-            Class bootstrapClass = cl.loadClass(bootstrapName);
-            Object obj = bootstrapClass.newInstance();
+            Class<?> bootstrapClass = cl.loadClass(bootstrapName);
+            Object obj;
+            try {
+                Constructor<?> constructor = bootstrapClass.getConstructor(Vertx.class, Container.class);
+                obj = constructor.newInstance(vertx, container);
+            } catch (NoSuchMethodException | SecurityException ignored){
+                obj = bootstrapClass.newInstance();
+            }
+
 
             if (obj instanceof Module) {
                 bootstrap = (Module) obj;
