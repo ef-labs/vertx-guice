@@ -23,21 +23,27 @@
 
 package com.englishtown.vertx.guice;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import org.vertx.java.core.Future;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.platform.Verticle;
-import org.vertx.java.platform.impl.java.CompilingClassLoader;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.Verticle;
+import io.vertx.core.impl.verticle.CompilingClassLoader;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.impl.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+
 /**
  * Guice Verticle to lazy load the real verticle with DI
  */
-public class GuiceVerticleLoader extends Verticle {
+public class GuiceVerticleLoader extends AbstractVerticle {
+
+    Logger logger = LoggerFactory.getLogger(GuiceVerticleLoader.class);
 
     private final String main;
     private final ClassLoader cl;
@@ -57,15 +63,17 @@ public class GuiceVerticleLoader extends Verticle {
      * be considered started until the other modules and verticles have been started.
      *
      * @param startedResult When you are happy your verticle is started set the result
+     * @throws Exception 
      */
     @Override
-    public void start(Future<Void> startedResult) {
+    public void start(Future<Void> startedResult) throws Exception {
 
+        //TODO Migration: We can now just throw an exception.
         // Create the real verticle
         try {
             realVerticle = createRealVerticle();
         } catch (Exception e) {
-            startedResult.setFailure(e);
+            startedResult.fail(e);
             return;
         }
 
@@ -77,12 +85,13 @@ public class GuiceVerticleLoader extends Verticle {
     /**
      * Vert.x calls the stop method when the verticle is undeployed.
      * Put any cleanup code for your verticle in here
+     * @throws Exception 
      */
     @Override
-    public void stop() {
+    public void stop() throws Exception {
         // Stop the real verticle
         if (realVerticle != null) {
-            realVerticle.stop();
+            realVerticle.stop(Future.future());
             realVerticle = null;
         }
     }
@@ -101,14 +110,12 @@ public class GuiceVerticleLoader extends Verticle {
             clazz = cl.loadClass(className);
         }
         Verticle verticle = createRealVerticle(clazz);
-        verticle.setVertx(vertx);
-        verticle.setContainer(container);
         return verticle;
     }
 
     private Verticle createRealVerticle(Class<?> clazz) throws Exception {
 
-        JsonObject config = container.config();
+        JsonObject config = vertx.context().config();
         String bootstrapName = config.getString(CONFIG_BOOTSTRAP_BINDER_NAME, BOOTSTRAP_BINDER_NAME);
         Module bootstrap = null;
 
@@ -119,16 +126,16 @@ public class GuiceVerticleLoader extends Verticle {
             if (obj instanceof Module) {
                 bootstrap = (Module) obj;
             } else {
-                container.logger().error("Class " + bootstrapName
+                logger.error("Class " + bootstrapName
                         + " does not implement Module.");
             }
         } catch (ClassNotFoundException e) {
-            container.logger().error("Guice bootstrap binder class " + bootstrapName
+            logger.error("Guice bootstrap binder class " + bootstrapName
                     + " was not found.  Are you missing injection bindings?");
         }
 
         List<Module> modules = new ArrayList<>();
-        modules.add(new VertxBinder(vertx, container));
+        modules.add(new VertxBinder());
 
         // Add bootstrap if it exists
         if (bootstrap != null) {

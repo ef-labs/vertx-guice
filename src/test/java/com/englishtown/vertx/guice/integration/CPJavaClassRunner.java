@@ -1,20 +1,20 @@
 package com.englishtown.vertx.guice.integration;
 
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.impl.LoggerFactory;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
-import org.vertx.java.core.AsyncResult;
-import org.vertx.java.core.AsyncResultHandler;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.eventbus.EventBus;
-import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.platform.PlatformLocator;
-import org.vertx.java.platform.PlatformManager;
-import org.vertx.testtools.JavaClassRunner;
-import org.vertx.testtools.TestVerticleInfo;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -28,23 +28,31 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: adriangonzalez
- * Date: 7/18/13
- * Time: 5:02 PM
- * To change this template use File | Settings | File Templates.
- */
-public class CPJavaClassRunner extends JavaClassRunner {
 
-    private final PlatformManager mgr;
+/**
+* User: adriangonzalez
+*/
+public class CPJavaClassRunner extends BlockJUnit4ClassRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(CPJavaClassRunner.class);
+
+    protected static final long TIMEOUT;
+    private static final long DEFAULT_TIMEOUT = 300;
+    static {
+        String timeout = System.getProperty("vertx.test.timeout");
+        TIMEOUT = timeout == null ? DEFAULT_TIMEOUT : Long.valueOf(timeout);
+    }
+
+    public static final String TESTRUNNER_HANDLER_ADDRESS = "vertx.testframework.handler";
+
+    private final Vertx vertx;
+    protected String main;
 
     public CPJavaClassRunner(Class<?> klass) throws InitializationError {
         super(klass);
-        mgr = PlatformLocator.factory.createPlatformManager();
+        vertx = Vertx.vertx();
     }
 
-    @Override
     protected void runChild(FrameworkMethod method, RunNotifier notifier) {
         Class<?> testClass = getTestClass().getJavaClass();
         String methodName = method.getName();
@@ -53,63 +61,53 @@ public class CPJavaClassRunner extends JavaClassRunner {
         notifier.fireTestStarted(desc);
         final AtomicReference<Throwable> failure = new AtomicReference<>();
         try {
-            JsonObject conf = new JsonObject().putString("methodName", getActualMethodName(methodName));
+            JsonObject conf = new JsonObject().put("methodName", methodName);
             final CountDownLatch testLatch = new CountDownLatch(1);
-            Handler<Message<JsonObject>> handler = new Handler<Message<JsonObject>>() {
-                @Override
-                public void handle(Message<JsonObject> msg) {
-                    JsonObject jmsg = msg.body();
-                    String type = jmsg.getString("type");
-                    try {
-                        switch (type) {
-                            case "done":
-                                break;
-                            case "failure":
-                                byte[] bytes = jmsg.getBinary("failure");
-                                // Deserialize
-                                ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-                                Throwable t = (Throwable) ois.readObject();
-                                // We display this since otherwise Gradle doesn't display it to stdout/stderr
-                                t.printStackTrace();
-                                failure.set(t);
-                                break;
+            Handler<Message<JsonObject>> handler = (Message<JsonObject> msg) -> {
+                        JsonObject jmsg = msg.body();
+                        String type = jmsg.getString("type");
+                        try {
+                            switch (type) {
+                                case "done":
+                                    break;
+                                case "failure":
+                                    byte[] bytes = jmsg.getBinary("failure");
+                                    // Deserialize
+                                    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+                                    Throwable t = (Throwable) ois.readObject();
+                                    // We display this since otherwise Gradle doesn't display it to stdout/stderr
+                                    t.printStackTrace();
+                                    failure.set(t);
+                                    break;
+                            }
+                        } catch (ClassNotFoundException | IOException e) {
+                            e.printStackTrace();
+                            failure.set(e);
+                        } finally {
+                            testLatch.countDown();
                         }
-                    } catch (ClassNotFoundException | IOException e) {
-                        e.printStackTrace();
-                        failure.set(e);
-                    } finally {
-                        testLatch.countDown();
-                    }
-                }
             };
 
-            EventBus eb = mgr.vertx().eventBus();
-            eb.registerHandler(TESTRUNNER_HANDLER_ADDRESS, handler);
+
+            EventBus eb = Vertx.vertx().eventBus();
+            MessageConsumer consumer = eb.consumer(TESTRUNNER_HANDLER_ADDRESS);
+            consumer.handler(handler);
             final CountDownLatch deployLatch = new CountDownLatch(1);
             final AtomicReference<String> deploymentIDRef = new AtomicReference<>();
-            String includes;
-            TestVerticleInfo annotation = getAnnotation();
-            if (annotation != null) {
-                includes = getAnnotation().includes().trim();
-                if (includes.isEmpty()) {
-                    includes = null;
-                }
-            } else {
-                includes = null;
-            }
             System.out.println("Starting test: " + testDesc);
             String main = getMain(methodName);
             URL[] urls = getClassPaths(methodName);
             final AtomicReference<Throwable> deployThrowable = new AtomicReference<>();
-            mgr.deployVerticle(main, conf, urls, 1, includes, new AsyncResultHandler<String>() {
-                public void handle(AsyncResult<String> ar) {
-                    if (ar.succeeded()) {
-                        deploymentIDRef.set(ar.result());
-                    } else {
-                        deployThrowable.set(ar.cause());
-                    }
-                    deployLatch.countDown();
+            DeploymentOptions options = new DeploymentOptions(conf);
+            options.setInstances(1);
+            //TODO Migration: Set additional params? urls, 1, includes
+            Vertx.vertx().deployVerticle(main, options, ar -> {
+                if (ar.succeeded()) {
+                    deploymentIDRef.set(ar.result());
+                } else {
+                    deployThrowable.set(ar.cause());
                 }
+                deployLatch.countDown();
             });
             waitForLatch(deployLatch);
             if (deployThrowable.get() != null) {
@@ -118,16 +116,14 @@ public class CPJavaClassRunner extends JavaClassRunner {
                 return;
             }
             waitForLatch(testLatch);
-            eb.unregisterHandler(TESTRUNNER_HANDLER_ADDRESS, handler);
+            consumer.unregister();
             final CountDownLatch undeployLatch = new CountDownLatch(1);
             final AtomicReference<Throwable> undeployThrowable = new AtomicReference<>();
-            mgr.undeploy(deploymentIDRef.get(), new AsyncResultHandler<Void>() {
-                public void handle(AsyncResult<Void> ar) {
-                    if (ar.failed()) {
-                        undeployThrowable.set(ar.cause());
-                    }
-                    undeployLatch.countDown();
+            vertx.undeployVerticle(deploymentIDRef.get(), ar -> {
+                if (ar.failed()) {
+                    undeployThrowable.set(ar.cause());
                 }
+                undeployLatch.countDown();
             });
             waitForLatch(undeployLatch);
             if (undeployThrowable.get() != null) {
@@ -147,11 +143,6 @@ public class CPJavaClassRunner extends JavaClassRunner {
     protected URL[] getClassPaths(String methodName) {
         List<URL> urls = new ArrayList<>();
 
-        URL cp = getClassPath(methodName);
-        if (cp != null) {
-            urls.add(cp);
-        }
-
         String classPaths = System.getProperty("java.class.path");
         String pathSeparator = System.getProperty("path.separator");
         String fileSeparator = System.getProperty("file.separator");
@@ -160,10 +151,9 @@ public class CPJavaClassRunner extends JavaClassRunner {
         String[] cps = classPaths.split(pathSeparator);
         String javaHome = System.getProperty("java.home");
         String vertxCore = fileSeparator + "vertx-core" + fileSeparator;
-        String vertxPlatform = fileSeparator + "vertx-platform" + fileSeparator;
 
         for (String s : cps) {
-            if (!s.startsWith(javaHome) && !s.contains(vertxCore) && !s.contains(vertxPlatform)) {
+            if (!s.startsWith(javaHome) && !s.contains(vertxCore)) {
                 File f = new File(s);
                 if (f.exists()) {
                     try {
@@ -191,4 +181,7 @@ public class CPJavaClassRunner extends JavaClassRunner {
         }
     }
 
+    protected String getMain(String methodName) {
+        return main;
+    }
 }

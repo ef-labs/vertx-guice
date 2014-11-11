@@ -23,18 +23,16 @@
 
 package com.englishtown.vertx.guice;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+
+import io.vertx.core.logging.impl.LoggerFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.platform.Container;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link GuiceVerticleFactory}
@@ -48,39 +46,27 @@ public class GuiceVerticleFactoryTest {
     @Mock
     Vertx vertx;
     @Mock
-    Container container;
-    @Mock
     Logger logger;
 
     @Before
     public void setUp() {
-        when(container.config()).thenReturn(config);
-        when(container.logger()).thenReturn(logger);
+        // Use our own test logger factory / logger instead. We can't use powermock to statically mock the
+        // LoggerFactory since javassist 1.18.x contains a bug that prevents the usage of powermock.
+        System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, LogDelegateTestFactory.class.getCanonicalName());
+        LoggerFactory.initialise();
+        TestLogDelegate.reset();
     }
 
     @Test
     public void testCreateVerticle() throws Exception {
-
-        config.putString("guice_binder", "com.englishtown.vertx.guice.BootstrapBinder");
-
-        factory.init(vertx, container, this.getClass().getClassLoader());
-        factory.createVerticle("com.englishtown.vertx.guice.TestGuiceVerticle");
-
-    }
-
-    @Test
-    public void testReportException() throws Exception {
-
-        factory.reportException(null, null);
-        factory.reportException(logger, new RuntimeException());
-
+        config.put("guice_binder", "com.englishtown.vertx.guice.BootstrapBinder");
+        factory.init(vertx);
+        factory.createVerticle("com.englishtown.vertx.guice.TestGuiceVerticle", this.getClass().getClassLoader());
     }
 
     @Test
     public void testClose() throws Exception {
-
         factory.close();
-
     }
 
 }
