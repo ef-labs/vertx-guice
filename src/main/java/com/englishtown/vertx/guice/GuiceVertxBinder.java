@@ -23,15 +23,18 @@
 
 package com.englishtown.vertx.guice;
 
-import io.vertx.core.Vertx;
 import com.google.inject.AbstractModule;
+import io.vertx.core.Vertx;
 
 /**
  * Guice {@link AbstractModule} for vertx and container injections
  */
-class VertxBinder extends AbstractModule {
+public class GuiceVertxBinder extends AbstractModule {
 
-    public VertxBinder() {
+    private final Vertx vertx;
+
+    public GuiceVertxBinder(Vertx vertx) {
+        this.vertx = vertx;
     }
 
     /**
@@ -39,7 +42,6 @@ class VertxBinder extends AbstractModule {
      */
     @Override
     protected void configure() {
-        //TODO Migration: I think this could cause a problem.
-        bind(Vertx.class).toInstance(Vertx.vertx());
+        bind(Vertx.class).toInstance(vertx);
     }
 }

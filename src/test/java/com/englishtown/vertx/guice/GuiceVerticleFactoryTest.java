@@ -23,6 +23,7 @@
 
 package com.englishtown.vertx.guice;
 
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -34,39 +35,40 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
 /**
  * Unit tests for {@link GuiceVerticleFactory}
  */
 @RunWith(MockitoJUnitRunner.class)
 public class GuiceVerticleFactoryTest {
 
-    GuiceVerticleFactory factory = new GuiceVerticleFactory();
-    JsonObject config = new JsonObject();
+    private GuiceVerticleFactory factory;
 
     @Mock
     Vertx vertx;
-    @Mock
-    Logger logger;
 
     @Before
-    public void setUp() {
-        // Use our own test logger factory / logger instead. We can't use powermock to statically mock the
-        // LoggerFactory since javassist 1.18.x contains a bug that prevents the usage of powermock.
-        System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, LogDelegateTestFactory.class.getCanonicalName());
-        LoggerFactory.initialise();
-        TestLogDelegate.reset();
+    public void setUp() throws Exception {
+        factory = new GuiceVerticleFactory();
+        factory.init(vertx);
+    }
+
+    @Test
+    public void testPrefix() {
+        assertEquals("java-guice", factory.prefix());
     }
 
     @Test
     public void testCreateVerticle() throws Exception {
-        config.put("guice_binder", "com.englishtown.vertx.guice.BootstrapBinder");
-        factory.init(vertx);
-        factory.createVerticle("com.englishtown.vertx.guice.TestGuiceVerticle", this.getClass().getClassLoader());
-    }
+        String identifier = GuiceVerticleFactory.PREFIX + ":" + TestGuiceVerticle.class.getName();
+        Verticle verticle = factory.createVerticle(identifier, this.getClass().getClassLoader());
+        assertThat(verticle, instanceOf(GuiceVerticleLoader.class));
 
-    @Test
-    public void testClose() throws Exception {
-        factory.close();
+        GuiceVerticleLoader loader = (GuiceVerticleLoader) verticle;
+        assertEquals(TestGuiceVerticle.class.getName(), loader.getVerticleName());
     }
 
 }
