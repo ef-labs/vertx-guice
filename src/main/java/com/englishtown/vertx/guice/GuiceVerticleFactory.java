@@ -23,12 +23,10 @@
 
 package com.englishtown.vertx.guice;
 
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.platform.Container;
-import org.vertx.java.platform.Verticle;
-import org.vertx.java.platform.VerticleFactory;
-import org.vertx.java.platform.impl.java.JavaVerticleFactory;
+import io.vertx.core.Verticle;
+import io.vertx.core.Vertx;
+import io.vertx.core.impl.JavaVerticleFactory;
+import io.vertx.core.spi.VerticleFactory;
 
 /**
  * Extends the default vert.x {@link JavaVerticleFactory} using Guice for dependency injection.
@@ -36,39 +34,34 @@ import org.vertx.java.platform.impl.java.JavaVerticleFactory;
 public class GuiceVerticleFactory implements VerticleFactory {
 
     private Vertx vertx;
-    private Container container;
-    private ClassLoader cl;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void init(Vertx vertx, Container container, ClassLoader cl) {
+    public void init(Vertx vertx) {
         this.vertx = vertx;
-        this.container = container;
-        this.cl = cl;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Verticle createVerticle(String main) throws Exception {
+    public Verticle createVerticle(String main, ClassLoader cl) throws Exception {
         Verticle verticle = new GuiceVerticleLoader(main, cl);
-        verticle.setVertx(vertx);
-        verticle.setContainer(container);
+        //TODO Migration: Do we need to init the verticle and set vertx?
+//        verticle.setVertx(vertx);
         return verticle;
     }
 
     @Override
-    public void reportException(Logger logger, Throwable t) {
-        if (logger != null) {
-            logger.error("Exception in GuiceVerticleFactory", t);
-        }
+    public void close() {
     }
 
     @Override
-    public void close() {
+    public String prefix() {
+        // TODO Migration: Check whether a prefix is needed
+        return null;
     }
 
 }

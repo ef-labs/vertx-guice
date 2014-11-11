@@ -21,14 +21,12 @@
  * THE SOFTWARE.
  */
 
-import com.englishtown.vertx.guice.MyDependency;
-import org.vertx.java.platform.Verticle;
-
+import static org.junit.Assert.assertNotNull;
+import io.vertx.core.AbstractVerticle;
 import javax.inject.Inject;
+import com.englishtown.vertx.guice.MyDependency;
 
-import static org.vertx.testtools.VertxAssert.assertNotNull;
-
-public class UncompiledDIVerticle extends Verticle {
+public class UncompiledDIVerticle extends AbstractVerticle {
 
     private final MyDependency myDependency;
 

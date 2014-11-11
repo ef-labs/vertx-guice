@@ -1,18 +1,18 @@
 package com.englishtown.vertx.guice.integration;
 
-import com.englishtown.vertx.guice.MyDependency;
-import com.englishtown.vertx.guice.MyDependency2;
-import org.vertx.java.platform.Verticle;
+import static org.junit.Assert.assertNotNull;
+import io.vertx.core.AbstractVerticle;
 
 import javax.inject.Inject;
 
-import static org.vertx.testtools.VertxAssert.assertNotNull;
+import com.englishtown.vertx.guice.MyDependency2;
 
 /**
  * Verticle with dependencies injected
  */
-public class DependencyInjectionVerticle2 extends Verticle {
+public class DependencyInjectionVerticle2 extends AbstractVerticle {
 
+    @SuppressWarnings("unused")
     private final MyDependency2 myDependency;
 
     @Inject

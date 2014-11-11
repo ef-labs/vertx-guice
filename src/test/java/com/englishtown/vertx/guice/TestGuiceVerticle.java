@@ -23,7 +23,7 @@
 
 package com.englishtown.vertx.guice;
 
-import org.vertx.java.platform.Verticle;
+import io.vertx.core.AbstractVerticle;
 
 import javax.inject.Inject;
 
@@ -34,7 +34,7 @@ import javax.inject.Inject;
  * Time: 3:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TestGuiceVerticle extends Verticle {
+public class TestGuiceVerticle extends AbstractVerticle {
 
     private final MyDependency dependency;
 
