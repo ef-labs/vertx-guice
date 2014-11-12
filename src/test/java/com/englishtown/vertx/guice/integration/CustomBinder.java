@@ -23,7 +23,7 @@
 
 package com.englishtown.vertx.guice.integration;
 
-import com.englishtown.vertx.guice.DefaultMyDependency;
+import com.englishtown.vertx.guice.MyDependencyImpl;
 import com.englishtown.vertx.guice.MyDependency;
 import com.google.inject.AbstractModule;
 
@@ -33,6 +33,6 @@ import com.google.inject.AbstractModule;
 public class CustomBinder extends AbstractModule {
     @Override
     protected void configure() {
-        bind(MyDependency.class).to(DefaultMyDependency.class);
+        bind(MyDependency.class).to(MyDependencyImpl.class);
     }
 }
