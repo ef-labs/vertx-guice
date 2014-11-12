@@ -35,6 +35,6 @@ public class BootstrapBinder extends AbstractModule {
      */
     @Override
     protected void configure() {
-        bind(MyDependency.class).to(DefaultMyDependency.class);
+        bind(MyDependency.class).to(MyDependencyImpl.class);
     }
 }

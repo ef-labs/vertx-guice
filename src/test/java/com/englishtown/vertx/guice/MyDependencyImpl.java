@@ -23,5 +23,5 @@
 
 package com.englishtown.vertx.guice;
 
-public class DefaultMyDependency implements MyDependency {
+public class MyDependencyImpl implements MyDependency {
 }
