@@ -3,37 +3,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.englishtown</groupId>
+        <groupId>com.englishtown.vertx</groupId>
         <artifactId>oss-parent-vertx</artifactId>
         <version>2.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>vertx-mod-guice</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>vertx-guice</artifactId>
+    <packaging>pom</packaging>
     <version>2.0.0-SNAPSHOT</version>
+
+    <modules>
+        <module>ext-guice</module>
+    </modules>
 
     <description>Provides a VerticleFactory that uses Guice for dependency injection.</description>
     <inceptionYear>2013</inceptionYear>
-
-    <properties>
-        <!--Dependency versions-->
-        <guice.version>3.0</guice.version>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>${guice.version}</version>
-        </dependency>
-
-        <!--Test dependencies-->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
     <distributionManagement>
         <site>
