@@ -23,10 +23,14 @@
 
 package com.englishtown.vertx.guice;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.impl.verticle.CompilingClassLoader;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
@@ -34,27 +38,23 @@ import io.vertx.core.logging.impl.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-
 /**
  * Guice Verticle to lazy load the real verticle with DI
  */
 public class GuiceVerticleLoader extends AbstractVerticle {
 
-    Logger logger = LoggerFactory.getLogger(GuiceVerticleLoader.class);
+    private Logger logger = LoggerFactory.getLogger(GuiceVerticleLoader.class);
 
-    private final String main;
-    private final ClassLoader cl;
+    private final String verticleName;
+    private final ClassLoader classLoader;
     private Verticle realVerticle;
 
     public static final String CONFIG_BOOTSTRAP_BINDER_NAME = "guice_binder";
     public static final String BOOTSTRAP_BINDER_NAME = "com.englishtown.vertx.guice.BootstrapBinder";
 
-    public GuiceVerticleLoader(String main, ClassLoader cl) {
-        this.main = main;
-        this.cl = cl;
+    public GuiceVerticleLoader(String verticleName, ClassLoader classLoader) {
+        this.verticleName = verticleName;
+        this.classLoader = classLoader;
     }
 
     /**
@@ -63,12 +63,11 @@ public class GuiceVerticleLoader extends AbstractVerticle {
      * be considered started until the other modules and verticles have been started.
      *
      * @param startedResult When you are happy your verticle is started set the result
-     * @throws Exception 
+     * @throws Exception
      */
     @Override
     public void start(Future<Void> startedResult) throws Exception {
 
-        //TODO Migration: We can now just throw an exception.
         // Create the real verticle
         try {
             realVerticle = createRealVerticle();
@@ -77,7 +76,8 @@ public class GuiceVerticleLoader extends AbstractVerticle {
             return;
         }
 
-        // Start the real verticle
+        // Init and start the real verticle
+        realVerticle.init(vertx, context);
         realVerticle.start(startedResult);
 
     }
@@ -85,29 +85,32 @@ public class GuiceVerticleLoader extends AbstractVerticle {
     /**
      * Vert.x calls the stop method when the verticle is undeployed.
      * Put any cleanup code for your verticle in here
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Override
-    public void stop() throws Exception {
+    public void stop(Future<Void> stopFuture) throws Exception {
         // Stop the real verticle
         if (realVerticle != null) {
-            realVerticle.stop(Future.future());
+            realVerticle.stop(stopFuture);
             realVerticle = null;
         }
     }
 
+    public String getVerticleName() {
+        return verticleName;
+    }
+
     public Verticle createRealVerticle() throws Exception {
-        String className = main;
+        String className = verticleName;
         Class<?> clazz;
 
-        if (isJavaSource(main)) {
-            // TODO - is this right???
-            // Don't we want one CompilingClassLoader per instance of this?
-            CompilingClassLoader compilingLoader = new CompilingClassLoader(cl, main);
+        if (className.endsWith(".java")) {
+            CompilingClassLoader compilingLoader = new CompilingClassLoader(classLoader, className);
             className = compilingLoader.resolveMainClassName();
             clazz = compilingLoader.loadClass(className);
         } else {
-            clazz = cl.loadClass(className);
+            clazz = classLoader.loadClass(className);
         }
         Verticle verticle = createRealVerticle(clazz);
         return verticle;
@@ -115,40 +118,41 @@ public class GuiceVerticleLoader extends AbstractVerticle {
 
     private Verticle createRealVerticle(Class<?> clazz) throws Exception {
 
-        JsonObject config = vertx.context().config();
-        String bootstrapName = config.getString(CONFIG_BOOTSTRAP_BINDER_NAME, BOOTSTRAP_BINDER_NAME);
-        Module bootstrap = null;
+        JsonObject config = context.config();
+        Object field = config.getValue(CONFIG_BOOTSTRAP_BINDER_NAME);
+        JsonArray bootstrapNames;
+        List<Module> bootstraps = new ArrayList<>();
 
-        try {
-            Class bootstrapClass = cl.loadClass(bootstrapName);
-            Object obj = bootstrapClass.newInstance();
+        if (field instanceof JsonArray) {
+            bootstrapNames = (JsonArray) field;
+        } else {
+            bootstrapNames = new JsonArray().add((field == null ? BOOTSTRAP_BINDER_NAME : field));
+        }
 
-            if (obj instanceof Module) {
-                bootstrap = (Module) obj;
-            } else {
-                logger.error("Class " + bootstrapName
-                        + " does not implement Module.");
+        for (int i = 0; i < bootstrapNames.size(); i++) {
+            String bootstrapName = bootstrapNames.getString(i);
+            try {
+                Class bootstrapClass = classLoader.loadClass(bootstrapName);
+                Object obj = bootstrapClass.newInstance();
+
+                if (obj instanceof Module) {
+                    bootstraps.add((Module) obj);
+                } else {
+                    logger.error("Class " + bootstrapName
+                            + " does not implement Module.");
+                }
+            } catch (ClassNotFoundException e) {
+                logger.error("Guice bootstrap binder class " + bootstrapName
+                        + " was not found.  Are you missing injection bindings?");
             }
-        } catch (ClassNotFoundException e) {
-            logger.error("Guice bootstrap binder class " + bootstrapName
-                    + " was not found.  Are you missing injection bindings?");
         }
 
-        List<Module> modules = new ArrayList<>();
-        modules.add(new VertxBinder());
-
-        // Add bootstrap if it exists
-        if (bootstrap != null) {
-            modules.add(bootstrap);
-        }
+        // Add vert.x binder
+        bootstraps.add(new GuiceVertxBinder(vertx));
 
         // Each verticle factory will have it's own injector instance
-        Injector injector = Guice.createInjector(modules);
+        Injector injector = Guice.createInjector(bootstraps);
         return (Verticle) injector.getInstance(clazz);
-    }
-
-    private boolean isJavaSource(String main) {
-        return main.endsWith(".java");
     }
 
 }

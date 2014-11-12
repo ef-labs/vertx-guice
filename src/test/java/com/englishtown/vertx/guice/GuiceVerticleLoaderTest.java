@@ -23,25 +23,22 @@
 
 package com.englishtown.vertx.guice;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import com.englishtown.vertx.guice.integration.CustomBinder;
+import com.englishtown.vertx.guice.integration.DependencyInjectionVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.impl.LoggerFactory;
-
+import io.vertx.core.logging.impl.LogDelegate;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.englishtown.vertx.guice.integration.CustomBinder;
-import com.englishtown.vertx.guice.integration.DependencyInjectionVerticle;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link GuiceVerticleLoader}
@@ -49,20 +46,24 @@ import com.englishtown.vertx.guice.integration.DependencyInjectionVerticle;
 @RunWith(MockitoJUnitRunner.class)
 public class GuiceVerticleLoaderTest {
 
-    JsonObject config = new JsonObject();
+    private JsonObject config = new JsonObject();
+    private static LogDelegate logger;
 
     @Mock
     Vertx vertx;
     @Mock
     Context context;
+    @Mock
+    Future<Void> future;
+
+    @BeforeClass
+    public static void setUpOnce() {
+        logger = MockLogDelegateFactory.getLogDelegate();
+    }
 
     @Before
     public void setUp() {
-        // Use our own test logger factory / logger instead. We can't use powermock to statically mock the
-        // LoggerFactory since javassist 1.18.x contains a bug that prevents the usage of powermock.
-        System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, LogDelegateTestFactory.class.getCanonicalName());
-        LoggerFactory.initialise();
-        TestLogDelegate.reset();
+        MockLogDelegateFactory.reset();
         when(vertx.context()).thenReturn(context);
         when(context.config()).thenReturn(config);
     }
@@ -79,13 +80,13 @@ public class GuiceVerticleLoaderTest {
     public void testStart_Compiled() throws Exception {
 
         String main = DependencyInjectionVerticle.class.getName();
-        Future<Void> vr = Future.future();
 
         GuiceVerticleLoader loader = createLoader(main);
-        loader.start(vr);
+        loader.start(future);
 
-        assertTrue(vr.succeeded());
-        assertFalse("The logger should not have been used.", TestLogDelegate.wasUsed());
+        verify(future).complete();
+        verify(future, never()).fail(any());
+        verifyZeroInteractions(logger);
         loader.stop();
 
     }
@@ -94,13 +95,13 @@ public class GuiceVerticleLoaderTest {
     public void testStart_Uncompiled() throws Exception {
 
         String main = "UncompiledDIVerticle.java";
-        Future<Void> vr = Future.future();
 
         GuiceVerticleLoader loader = createLoader(main);
-        loader.start(vr);
+        loader.start(future);
 
-        assertTrue("The verticle creation should have been successful.", vr.succeeded());
-        assertFalse("The logger should not have been used.", TestLogDelegate.wasUsed());
+        verify(future).complete();
+        verify(future, never()).fail(any());
+        verifyZeroInteractions(logger);
         loader.stop();
 
     }
@@ -111,13 +112,13 @@ public class GuiceVerticleLoaderTest {
         config.put("guice_binder", CustomBinder.class.getName());
 
         String main = DependencyInjectionVerticle.class.getName();
-        Future<Void> vr = Future.future();
 
         GuiceVerticleLoader loader = createLoader(main);
-        loader.start(vr);
+        loader.start(future);
 
-        assertTrue("The verticle creation should have been successful.", vr.succeeded());
-        assertFalse("The logger should not have been used.", TestLogDelegate.wasUsed());
+        verify(future).complete();
+        verify(future, never()).fail(any());
+        verifyZeroInteractions(logger);
         loader.stop();
 
     }
@@ -129,15 +130,13 @@ public class GuiceVerticleLoaderTest {
         config.put("guice_binder", binder);
 
         String main = DependencyInjectionVerticle.class.getName();
-        Future<Void> vr = Future.future();
 
         GuiceVerticleLoader loader = createLoader(main);
-        loader.start(vr);
+        loader.start(future);
 
-        assertFalse("The verticle creation should fail.", vr.succeeded());
-        assertNotNull(vr.cause());
-        assertEquals("Class " + binder + " does not implement Module.", TestLogDelegate.getLastError());
-
+        verify(future, never()).complete();
+        verify(future).fail(any());
+        verify(logger).error(eq("Class " + binder + " does not implement Module."));
         loader.stop();
 
     }
@@ -149,15 +148,13 @@ public class GuiceVerticleLoaderTest {
         config.put("guice_binder", binder);
 
         String main = DependencyInjectionVerticle.class.getName();
-        Future<Void> vr = Future.future();
 
         GuiceVerticleLoader loader = createLoader(main);
-        loader.start(vr);
+        loader.start(future);
 
-        assertFalse("The verticle creation should fail.", vr.succeeded());
-        assertNotNull(vr.cause());
-        assertEquals("Guice bootstrap binder class " + binder
-                + " was not found.  Are you missing injection bindings?", TestLogDelegate.getLastError());
+        verify(future, never()).complete();
+        verify(future).fail(any());
+        verify(logger).error(eq("Guice bootstrap binder class " + binder + " was not found.  Are you missing injection bindings?"));
         loader.stop();
 
     }

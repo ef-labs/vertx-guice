@@ -33,35 +33,20 @@ import io.vertx.core.spi.VerticleFactory;
  */
 public class GuiceVerticleFactory implements VerticleFactory {
 
-    private Vertx vertx;
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void init(Vertx vertx) {
-        this.vertx = vertx;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Verticle createVerticle(String main, ClassLoader cl) throws Exception {
-        Verticle verticle = new GuiceVerticleLoader(main, cl);
-        //TODO Migration: Do we need to init the verticle and set vertx?
-//        verticle.setVertx(vertx);
-        return verticle;
-    }
-
-    @Override
-    public void close() {
-    }
+    public static final String PREFIX = "java-guice";
 
     @Override
     public String prefix() {
-        // TODO Migration: Check whether a prefix is needed
-        return null;
+        return PREFIX;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Verticle createVerticle(String verticleName, ClassLoader classLoader) throws Exception {
+        verticleName = VerticleFactory.removePrefix(verticleName);
+        return new GuiceVerticleLoader(verticleName, classLoader);
     }
 
 }
