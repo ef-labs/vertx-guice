@@ -28,6 +28,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.impl.JavaVerticleFactory;
 import io.vertx.core.spi.VerticleFactory;
 
+import java.lang.reflect.Constructor;
+
 /**
  * Extends the default vert.x {@link JavaVerticleFactory} using Guice for dependency injection.
  */
@@ -46,7 +48,17 @@ public class GuiceVerticleFactory implements VerticleFactory {
     @Override
     public Verticle createVerticle(String verticleName, ClassLoader classLoader) throws Exception {
         verticleName = VerticleFactory.removePrefix(verticleName);
-        return new GuiceVerticleLoader(verticleName, classLoader);
+
+        // Use the provided class loader to create an instance of GuiceVerticleLoader.  This is necessary when working with vert.x IsolatingClassLoader
+        @SuppressWarnings("unchecked")
+        Class<Verticle> loader = (Class<Verticle>) classLoader.loadClass(GuiceVerticleLoader.class.getName());
+        Constructor<Verticle> ctor = loader.getConstructor(String.class, ClassLoader.class);
+
+        if (ctor == null) {
+            throw new IllegalStateException("Could not find GuiceVerticleLoader constructor");
+        }
+
+        return ctor.newInstance(verticleName, classLoader);
     }
 
 }

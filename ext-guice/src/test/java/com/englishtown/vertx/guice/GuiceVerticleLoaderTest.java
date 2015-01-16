@@ -35,6 +35,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.mockito.Matchers.any;
@@ -64,7 +65,7 @@ public class GuiceVerticleLoaderTest {
     @Before
     public void setUp() {
         MockLogDelegateFactory.reset();
-        when(vertx.context()).thenReturn(context);
+        when(vertx.getOrCreateContext()).thenReturn(context);
         when(context.config()).thenReturn(config);
     }
 
@@ -72,7 +73,7 @@ public class GuiceVerticleLoaderTest {
 
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         GuiceVerticleLoader loader = new GuiceVerticleLoader(main, cl);
-        loader.init(vertx, vertx.context());
+        loader.init(vertx, vertx.getOrCreateContext());
         return loader;
     }
 
@@ -85,7 +86,7 @@ public class GuiceVerticleLoaderTest {
         loader.start(future);
 
         verify(future).complete();
-        verify(future, never()).fail(any());
+        verify(future, never()).fail(Mockito.<Throwable>any());
         verifyZeroInteractions(logger);
         loader.stop();
 
@@ -100,7 +101,7 @@ public class GuiceVerticleLoaderTest {
         loader.start(future);
 
         verify(future).complete();
-        verify(future, never()).fail(any());
+        verify(future, never()).fail(Mockito.<Throwable>any());
         verifyZeroInteractions(logger);
         loader.stop();
 
@@ -117,7 +118,7 @@ public class GuiceVerticleLoaderTest {
         loader.start(future);
 
         verify(future).complete();
-        verify(future, never()).fail(any());
+        verify(future, never()).fail(Mockito.<Throwable>any());
         verifyZeroInteractions(logger);
         loader.stop();
 
@@ -135,7 +136,7 @@ public class GuiceVerticleLoaderTest {
         loader.start(future);
 
         verify(future, never()).complete();
-        verify(future).fail(any());
+        verify(future).fail(Mockito.<Throwable>any());
         verify(logger).error(eq("Class " + binder + " does not implement Module."));
         loader.stop();
 
@@ -153,7 +154,7 @@ public class GuiceVerticleLoaderTest {
         loader.start(future);
 
         verify(future, never()).complete();
-        verify(future).fail(any());
+        verify(future).fail(Mockito.<Throwable>any());
         verify(logger).error(eq("Guice bootstrap binder class " + binder + " was not found.  Are you missing injection bindings?"));
         loader.stop();
 
