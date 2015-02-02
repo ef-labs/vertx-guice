@@ -1,7 +1,0 @@
-{
-    "description":"Provides a VerticleFactory that uses Guice for dependency injection",
-    "licenses": ["The MIT License"],
-    "author": "Englishtown",
-    "keywords": ["dependency injection", "di", "DI", "cdi", "CDI", "VerticleFactory", "Guice", "guice"],
-    "homepage": "https://github.com/englishtown/vertx-mod-guice"
-}

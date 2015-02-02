@@ -1,8 +1,7 @@
-[![Build Status](https://travis-ci.org/englishtown/vertx-mod-guice.png)](https://travis-ci.org/englishtown/vertx-mod-guice)
+[![Build Status](https://travis-ci.org/englishtown/vertx-guice.png)](https://travis-ci.org/englishtown/vertx-guice)
 
-# Vert.x Guice Module
-Enable Verticle and Module dependency injection using Guice.  The default Vert.x Java VerticleFactory is replaced with
-com.englishtown.vertx.guice.GuiceVerticleFactory for Verticle construction.
+# Vert.x Guice Extensions
+Enable Verticle dependency injection using Guice.  Deploy your verticle with the `java-guice:` prefix to use the `GuiceVerticleFactory`.
 
 
 ## License
@@ -10,12 +9,6 @@ http://englishtown.mit-license.org/
 
 
 ## Configuration
-
-To configure Vert.x to use the GuiceVerticleFactory modify the langs.properties java entry like this:
-`java=com.englishtown~vertx-mod-guice~1.3.0-SNAPSHOT:com.englishtown.vertx.guice.GuiceVerticleFactory`
-
-or set a system property when running:
-`-Dvertx.langs.java=com.englishtown~vertx-mod-guice~1.3.0-SNAPSHOT:com.englishtown.vertx.guice.GuiceVerticleFactory`
 
 Either provide a com.englishtown.vertx.guice.BootstrapBinder that implements com.google.inject.Module, or via vert.x config, provide a custom class name.
 
