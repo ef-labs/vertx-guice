@@ -4,7 +4,7 @@
 
     <artifactId>vertx-guice-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.0-RC1</version>
+    <version>2.0.0-RC2</version>
 
     <parent>
         <groupId>com.englishtown.vertx</groupId>
@@ -18,6 +18,7 @@
 
     <properties>
         <!--Dependency versions-->
+        <vertx.version>3.0.0-milestone3</vertx.version>
         <guice.version>3.0</guice.version>
     </properties>
 
