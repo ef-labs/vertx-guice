@@ -24,7 +24,6 @@
 package com.englishtown.vertx.guice;
 
 import io.vertx.core.Verticle;
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.JavaVerticleFactory;
 import io.vertx.core.spi.VerticleFactory;
 
