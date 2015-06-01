@@ -18,7 +18,7 @@
 
     <properties>
         <!--Dependency versions-->
-        <vertx.version>3.0.0-milestone5</vertx.version>
+        <vertx.version>3.0.0-milestone6</vertx.version>
         <guice.version>3.0</guice.version>
     </properties>
 
