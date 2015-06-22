@@ -1,8 +1,8 @@
 package com.englishtown.vertx.guice;
 
-import io.vertx.core.logging.impl.LogDelegate;
-import io.vertx.core.logging.impl.LogDelegateFactory;
-import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.spi.logging.LogDelegate;
+import io.vertx.core.spi.logging.LogDelegateFactory;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;

@@ -29,7 +29,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.impl.LogDelegate;
+import io.vertx.core.spi.logging.LogDelegate;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
