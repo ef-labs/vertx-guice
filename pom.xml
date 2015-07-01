@@ -14,6 +14,7 @@
 
     <modules>
         <module>vertx-guice</module>
+        <module>examples</module>
     </modules>
 
     <properties>
