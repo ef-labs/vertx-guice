@@ -23,7 +23,7 @@
 
 package com.englishtown.vertx.guice;
 
-import com.google.inject.Guice;
+import com.englishtown.vertx.guice.impl.VerticleInjector;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.vertx.core.AbstractVerticle;
@@ -50,6 +50,7 @@ public class GuiceVerticleLoader extends AbstractVerticle {
     private Verticle realVerticle;
 
     public static final String CONFIG_BOOTSTRAP_BINDER_NAME = "guice_binder";
+    public static final String CONFIG_BOOTSTRAP_INJECTOR_CLASS_NAME = "guice_injector_class";
     public static final String BOOTSTRAP_BINDER_NAME = "com.englishtown.vertx.guice.BootstrapBinder";
 
     public GuiceVerticleLoader(String verticleName, ClassLoader classLoader) {
@@ -150,8 +151,22 @@ public class GuiceVerticleLoader extends AbstractVerticle {
         // Add vert.x binder
         bootstraps.add(new GuiceVertxBinder(vertx));
 
-        // Each verticle factory will have it's own injector instance
-        Injector injector = Guice.createInjector(bootstraps);
+        InjectorBuilder injectorBuilder;
+        try{
+            String injectorBuilderName = config.getString(CONFIG_BOOTSTRAP_INJECTOR_CLASS_NAME, VerticleInjector.class.getName());
+            Class<?> loadClass = classLoader.loadClass(injectorBuilderName);
+            if(!InjectorBuilder.class.isAssignableFrom(loadClass)){
+                throw new IllegalArgumentException(injectorBuilderName+" must implement "+InjectorBuilder.class.getName());
+            }
+            injectorBuilder = (InjectorBuilder) loadClass.newInstance();
+        }catch (ClassCastException e){
+            logger.error(CONFIG_BOOTSTRAP_INJECTOR_CLASS_NAME +" must implement "+InjectorBuilder.class.getName(), e);
+            throw e;
+        }catch(InstantiationException e){
+            logger.error(CONFIG_BOOTSTRAP_INJECTOR_CLASS_NAME +" must have a public visible no argument constructor", e);
+            throw e;
+        }
+        Injector injector = injectorBuilder.create(bootstraps, clazz.getName());
         return (Verticle) injector.getInstance(clazz);
     }
 
