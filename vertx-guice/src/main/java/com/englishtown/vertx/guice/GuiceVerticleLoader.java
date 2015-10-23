@@ -50,6 +50,7 @@ public class GuiceVerticleLoader extends AbstractVerticle {
     private Verticle realVerticle;
 
     public static final String CONFIG_BOOTSTRAP_BINDER_NAME = "guice_binder";
+    public static final String GUICE_CONFIG = "guice_config";
     public static final String BOOTSTRAP_BINDER_NAME = "com.englishtown.vertx.guice.BootstrapBinder";
 
     public GuiceVerticleLoader(String verticleName, ClassLoader classLoader) {
@@ -149,7 +150,13 @@ public class GuiceVerticleLoader extends AbstractVerticle {
 
         // Add vert.x binder
         bootstraps.add(new GuiceVertxBinder(vertx));
-
+        
+        // Add vert.x verticle configuration binder
+        JsonObject guiceConfig = context.config().getJsonObject(GUICE_CONFIG);
+        if(guiceConfig != null) {
+            bootstraps.add(new GuiceVertxConfigBinder(context.config().getJsonObject(GUICE_CONFIG)));
+        }
+        
         // Each verticle factory will have it's own injector instance
         Injector injector = Guice.createInjector(bootstraps);
         return (Verticle) injector.getInstance(clazz);
