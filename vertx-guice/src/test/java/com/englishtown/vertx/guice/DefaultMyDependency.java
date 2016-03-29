@@ -23,5 +23,17 @@
 
 package com.englishtown.vertx.guice;
 
+import io.vertx.core.Vertx;
+
+import javax.inject.Inject;
+
 public class DefaultMyDependency implements MyDependency {
+
+    private final Vertx vertx;
+
+    @Inject
+    public DefaultMyDependency(Vertx vertx) {
+        this.vertx = vertx;
+    }
+
 }

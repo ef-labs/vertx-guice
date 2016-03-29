@@ -23,8 +23,11 @@
 
 package com.englishtown.vertx.guice;
 
+import com.google.inject.Injector;
+import io.vertx.core.Context;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +36,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link GuiceVerticleFactory}
@@ -42,12 +48,18 @@ import static org.junit.Assert.assertThat;
 public class GuiceVerticleFactoryTest {
 
     private GuiceVerticleFactory factory;
+    private JsonObject config = new JsonObject();
 
     @Mock
-    Vertx vertx;
+    private Vertx vertx;
+    @Mock
+    private Context context;
 
     @Before
     public void setUp() throws Exception {
+        when(vertx.getOrCreateContext()).thenReturn(context);
+        when(context.config()).thenReturn(config);
+
         factory = new GuiceVerticleFactory();
         factory.init(vertx);
     }
@@ -65,6 +77,19 @@ public class GuiceVerticleFactoryTest {
 
         GuiceVerticleLoader loader = (GuiceVerticleLoader) verticle;
         assertEquals(TestGuiceVerticle.class.getName(), loader.getVerticleName());
+    }
+
+    @Test
+    public void testSetInjector() throws Exception {
+
+        Injector original = factory.getInjector();
+        assertNotNull(original);
+
+        Injector injector = mock(Injector.class);
+        factory.setInjector(injector);
+
+        assertEquals(injector, factory.getInjector());
+
     }
 
 }

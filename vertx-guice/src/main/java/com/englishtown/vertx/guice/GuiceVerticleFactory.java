@@ -23,11 +23,17 @@
 
 package com.englishtown.vertx.guice;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.vertx.core.Verticle;
+import io.vertx.core.Vertx;
 import io.vertx.core.impl.JavaVerticleFactory;
 import io.vertx.core.spi.VerticleFactory;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Extends the default vert.x {@link JavaVerticleFactory} using Guice for dependency injection.
@@ -35,6 +41,42 @@ import java.lang.reflect.Constructor;
 public class GuiceVerticleFactory implements VerticleFactory {
 
     public static final String PREFIX = "java-guice";
+
+    private Vertx vertx;
+    private Injector injector;
+
+    /**
+     * Initialise the factory
+     *
+     * @param vertx The Vert.x instance
+     */
+    @Override
+    public void init(Vertx vertx) {
+        this.vertx = vertx;
+    }
+
+    /**
+     * Returns the current parent injector
+     *
+     * @return
+     */
+    public Injector getInjector() {
+        if (injector == null) {
+            injector = createInjector();
+        }
+        return injector;
+    }
+
+    /**
+     * Sets the parent injector
+     *
+     * @param injector
+     * @return
+     */
+    public GuiceVerticleFactory setInjector(Injector injector) {
+        this.injector = injector;
+        return this;
+    }
 
     @Override
     public String prefix() {
@@ -51,13 +93,23 @@ public class GuiceVerticleFactory implements VerticleFactory {
         // Use the provided class loader to create an instance of GuiceVerticleLoader.  This is necessary when working with vert.x IsolatingClassLoader
         @SuppressWarnings("unchecked")
         Class<Verticle> loader = (Class<Verticle>) classLoader.loadClass(GuiceVerticleLoader.class.getName());
-        Constructor<Verticle> ctor = loader.getConstructor(String.class, ClassLoader.class);
+        Constructor<Verticle> ctor = loader.getConstructor(String.class, ClassLoader.class, Injector.class);
 
         if (ctor == null) {
             throw new IllegalStateException("Could not find GuiceVerticleLoader constructor");
         }
 
-        return ctor.newInstance(verticleName, classLoader);
+        return ctor.newInstance(verticleName, classLoader, getInjector());
+    }
+
+    protected Injector createInjector() {
+
+        // Add vert.x binder
+        List<Module> binders = new ArrayList<>();
+        binders.add(new GuiceVertxBinder(vertx));
+
+        return Guice.createInjector(binders);
+
     }
 
 }
