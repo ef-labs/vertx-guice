@@ -35,9 +35,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -48,20 +46,10 @@ import static org.mockito.Mockito.when;
 public class GuiceVerticleFactoryTest {
 
     private GuiceVerticleFactory factory;
-    private JsonObject config = new JsonObject();
-
-    @Mock
-    private Vertx vertx;
-    @Mock
-    private Context context;
 
     @Before
     public void setUp() throws Exception {
-        when(vertx.getOrCreateContext()).thenReturn(context);
-        when(context.config()).thenReturn(config);
-
         factory = new GuiceVerticleFactory();
-        factory.init(vertx);
     }
 
     @Test
@@ -82,8 +70,7 @@ public class GuiceVerticleFactoryTest {
     @Test
     public void testSetInjector() throws Exception {
 
-        Injector original = factory.getInjector();
-        assertNotNull(original);
+        assertNull(factory.getInjector());
 
         Injector injector = mock(Injector.class);
         factory.setInjector(injector);

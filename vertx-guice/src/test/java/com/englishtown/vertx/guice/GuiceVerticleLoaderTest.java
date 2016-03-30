@@ -144,7 +144,7 @@ public class GuiceVerticleLoaderTest {
         assertEquals(DependencyInjectionVerticle.class, classCaptor.getValue());
 
         List<Module> modules = getModules();
-        assertEquals(1, modules.size());
+        assertEquals(2, modules.size());
         assertEquals(CustomBinder.class, modules.get(0).getClass());
 
     }
@@ -159,7 +159,7 @@ public class GuiceVerticleLoaderTest {
         doTest(main);
 
         verify(logger).error(eq("Class " + binder + " does not implement Module."));
-        assertEquals(0, getModules().size());
+        assertEquals(1, getModules().size());
 
     }
 
@@ -173,7 +173,7 @@ public class GuiceVerticleLoaderTest {
         doTest(main);
 
         verify(logger).error(eq("Guice bootstrap binder class " + binder + " was not found.  Are you missing injection bindings?"));
-        assertEquals(0, getModules().size());
+        assertEquals(1, getModules().size());
 
     }
 

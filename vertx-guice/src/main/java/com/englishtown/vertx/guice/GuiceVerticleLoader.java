@@ -23,6 +23,7 @@
 
 package com.englishtown.vertx.guice;
 
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.vertx.core.*;
@@ -159,8 +160,11 @@ public class GuiceVerticleLoader extends AbstractVerticle {
             }
         }
 
-        // Each verticle factory will have it's own child injector instance
-        Injector injector = parent.createChildInjector(bootstraps);
+        // Add vert.x binder
+        bootstraps.add(new GuiceVertxBinder(vertx));
+
+        // Each verticle factory will have it's own (child) injector instance
+        Injector injector = parent == null ? Guice.createInjector(bootstraps) : parent.createChildInjector(bootstraps);
         return (Verticle) injector.getInstance(clazz);
     }
 

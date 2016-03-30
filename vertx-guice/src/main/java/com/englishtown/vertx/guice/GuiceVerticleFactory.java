@@ -25,15 +25,11 @@ package com.englishtown.vertx.guice;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import io.vertx.core.Verticle;
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.JavaVerticleFactory;
 import io.vertx.core.spi.VerticleFactory;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Extends the default vert.x {@link JavaVerticleFactory} using Guice for dependency injection.
@@ -42,18 +38,7 @@ public class GuiceVerticleFactory implements VerticleFactory {
 
     public static final String PREFIX = "java-guice";
 
-    private Vertx vertx;
     private Injector injector;
-
-    /**
-     * Initialise the factory
-     *
-     * @param vertx The Vert.x instance
-     */
-    @Override
-    public void init(Vertx vertx) {
-        this.vertx = vertx;
-    }
 
     /**
      * Returns the current parent injector
@@ -103,13 +88,7 @@ public class GuiceVerticleFactory implements VerticleFactory {
     }
 
     protected Injector createInjector() {
-
-        // Add vert.x binder
-        List<Module> binders = new ArrayList<>();
-        binders.add(new GuiceVertxBinder(vertx));
-
-        return Guice.createInjector(binders);
-
+        return null;
     }
 
 }
