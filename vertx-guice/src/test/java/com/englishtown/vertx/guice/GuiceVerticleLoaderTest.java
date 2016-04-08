@@ -1,6 +1,6 @@
 /*
  * The MIT License (MIT)
- * Copyright © 2013 Englishtown <opensource@englishtown.com>
+ * Copyright © 2016 Englishtown <opensource@englishtown.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the “Software”), to deal
@@ -25,8 +25,12 @@ package com.englishtown.vertx.guice;
 
 import com.englishtown.vertx.guice.integration.CustomBinder;
 import com.englishtown.vertx.guice.integration.DependencyInjectionVerticle;
+import com.google.common.collect.Lists;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.logging.LogDelegate;
@@ -34,10 +38,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 /**
@@ -50,11 +59,21 @@ public class GuiceVerticleLoaderTest {
     private static LogDelegate logger;
 
     @Mock
-    Vertx vertx;
+    private Vertx vertx;
     @Mock
-    Context context;
+    private Context context;
     @Mock
-    Future<Void> future;
+    private Injector parent;
+    @Mock
+    private Injector child;
+    @Mock
+    private Verticle verticle;
+    @Mock
+    private Future<Void> future;
+    @Captor
+    private ArgumentCaptor<Iterable<Module>> modulesCaptor;
+    @Captor
+    private ArgumentCaptor<Class<Verticle>> classCaptor;
 
     @BeforeClass
     public static void setUpOnce() {
@@ -64,30 +83,41 @@ public class GuiceVerticleLoaderTest {
     @Before
     public void setUp() {
         MockLogDelegateFactory.reset();
-        when(vertx.getOrCreateContext()).thenReturn(context);
         when(context.config()).thenReturn(config);
+        when(parent.createChildInjector(Mockito.<Iterable<? extends Module>>any())).thenReturn(child);
+        when(child.getInstance(any(Class.class))).thenReturn(verticle);
     }
 
-    private GuiceVerticleLoader createLoader(String main) {
+    private GuiceVerticleLoader doTest(String main) throws Exception {
 
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        GuiceVerticleLoader loader = new GuiceVerticleLoader(main, cl);
-        loader.init(vertx, vertx.getOrCreateContext());
+        GuiceVerticleLoader loader = new GuiceVerticleLoader(main, cl, parent);
+        loader.init(vertx, context);
+        loader.start(future);
+
+        verify(verticle).init(eq(vertx), eq(context));
+        verify(verticle).start(future);
+        verify(parent).createChildInjector(modulesCaptor.capture());
+        verify(child).getInstance(classCaptor.capture());
+
+        loader.stop(future);
+        verify(verticle).stop(eq(future));
+
         return loader;
+    }
+
+    private List<Module> getModules() {
+        return Lists.newArrayList(modulesCaptor.getValue());
     }
 
     @Test
     public void testStart_Compiled() throws Exception {
 
         String main = DependencyInjectionVerticle.class.getName();
+        doTest(main);
 
-        GuiceVerticleLoader loader = createLoader(main);
-        loader.start(future);
-
-        verify(future).complete();
-        verify(future, never()).fail(Mockito.<Throwable>any());
         verifyZeroInteractions(logger);
-        loader.stop();
+        assertEquals(DependencyInjectionVerticle.class, classCaptor.getValue());
 
     }
 
@@ -95,14 +125,10 @@ public class GuiceVerticleLoaderTest {
     public void testStart_Uncompiled() throws Exception {
 
         String main = "UncompiledDIVerticle.java";
+        doTest(main);
 
-        GuiceVerticleLoader loader = createLoader(main);
-        loader.start(future);
-
-        verify(future).complete();
-        verify(future, never()).fail(Mockito.<Throwable>any());
         verifyZeroInteractions(logger);
-        loader.stop();
+        assertEquals("UncompiledDIVerticle", classCaptor.getValue().getName());
 
     }
 
@@ -112,14 +138,14 @@ public class GuiceVerticleLoaderTest {
         config.put("guice_binder", CustomBinder.class.getName());
 
         String main = DependencyInjectionVerticle.class.getName();
+        doTest(main);
 
-        GuiceVerticleLoader loader = createLoader(main);
-        loader.start(future);
-
-        verify(future).complete();
-        verify(future, never()).fail(Mockito.<Throwable>any());
         verifyZeroInteractions(logger);
-        loader.stop();
+        assertEquals(DependencyInjectionVerticle.class, classCaptor.getValue());
+
+        List<Module> modules = getModules();
+        assertEquals(2, modules.size());
+        assertEquals(CustomBinder.class, modules.get(0).getClass());
 
     }
 
@@ -130,14 +156,10 @@ public class GuiceVerticleLoaderTest {
         config.put("guice_binder", binder);
 
         String main = DependencyInjectionVerticle.class.getName();
+        doTest(main);
 
-        GuiceVerticleLoader loader = createLoader(main);
-        loader.start(future);
-
-        verify(future, never()).complete();
-        verify(future).fail(Mockito.<Throwable>any());
         verify(logger).error(eq("Class " + binder + " does not implement Module."));
-        loader.stop();
+        assertEquals(1, getModules().size());
 
     }
 
@@ -148,14 +170,10 @@ public class GuiceVerticleLoaderTest {
         config.put("guice_binder", binder);
 
         String main = DependencyInjectionVerticle.class.getName();
+        doTest(main);
 
-        GuiceVerticleLoader loader = createLoader(main);
-        loader.start(future);
-
-        verify(future, never()).complete();
-        verify(future).fail(Mockito.<Throwable>any());
         verify(logger).error(eq("Guice bootstrap binder class " + binder + " was not found.  Are you missing injection bindings?"));
-        loader.stop();
+        assertEquals(1, getModules().size());
 
     }
 

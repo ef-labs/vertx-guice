@@ -1,6 +1,6 @@
 /*
  * The MIT License (MIT)
- * Copyright © 2013 Englishtown <opensource@englishtown.com>
+ * Copyright © 2016 Englishtown <opensource@englishtown.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the “Software”), to deal
@@ -23,5 +23,17 @@
 
 package com.englishtown.vertx.guice;
 
+import io.vertx.core.Vertx;
+
+import javax.inject.Inject;
+
 public class DefaultMyDependency implements MyDependency {
+
+    private final Vertx vertx;
+
+    @Inject
+    public DefaultMyDependency(Vertx vertx) {
+        this.vertx = vertx;
+    }
+
 }
