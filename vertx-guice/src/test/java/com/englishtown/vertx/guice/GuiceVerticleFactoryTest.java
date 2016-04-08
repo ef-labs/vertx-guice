@@ -1,6 +1,6 @@
 /*
  * The MIT License (MIT)
- * Copyright © 2013 Englishtown <opensource@englishtown.com>
+ * Copyright © 2016 Englishtown <opensource@englishtown.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the “Software”), to deal
@@ -23,8 +23,11 @@
 
 package com.englishtown.vertx.guice;
 
+import com.google.inject.Injector;
+import io.vertx.core.Context;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,8 +35,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link GuiceVerticleFactory}
@@ -43,13 +47,9 @@ public class GuiceVerticleFactoryTest {
 
     private GuiceVerticleFactory factory;
 
-    @Mock
-    Vertx vertx;
-
     @Before
     public void setUp() throws Exception {
         factory = new GuiceVerticleFactory();
-        factory.init(vertx);
     }
 
     @Test
@@ -65,6 +65,18 @@ public class GuiceVerticleFactoryTest {
 
         GuiceVerticleLoader loader = (GuiceVerticleLoader) verticle;
         assertEquals(TestGuiceVerticle.class.getName(), loader.getVerticleName());
+    }
+
+    @Test
+    public void testSetInjector() throws Exception {
+
+        assertNull(factory.getInjector());
+
+        Injector injector = mock(Injector.class);
+        factory.setInjector(injector);
+
+        assertEquals(injector, factory.getInjector());
+
     }
 
 }
