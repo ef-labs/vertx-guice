@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/englishtown/vertx-guice.png)](https://travis-ci.org/englishtown/vertx-guice)
+[![Build Status](https://travis-ci.org/ef-labs/vertx-guice.png)](https://travis-ci.org/ef-labs/vertx-guice)
 
 # Vert.x Guice Extensions
 Enable Verticle dependency injection using Guice.  Deploy your verticle with the `java-guice:` prefix to use the `GuiceVerticleFactory`.
