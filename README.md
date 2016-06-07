@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/ef-labs/vertx-guice.png)](https://travis-ci.org/ef-labs/vertx-guice)
-
 # Vert.x Guice Extensions
 Enable Verticle dependency injection using Guice.  Deploy your verticle with the `java-guice:` prefix to use the `GuiceVerticleFactory`.
 
+[![Build Status](http://img.shields.io/travis/ef-labs/vertx-guice.svg?maxAge=2592000&style=flat-square)](https://travis-ci.org/ef-labs/vertx-guice)
+[![Maven Central](https://img.shields.io/maven-central/v/com.englishtown.vertx/vertx-guice.svg?maxAge=2592000&style=flat-square)](https://maven-badges.herokuapp.com/maven-central/com.englishtown.vertx/vertx-guice/)
 
 ## License
 http://englishtown.mit-license.org/
