@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.englishtown.vertx</groupId>
         <artifactId>oss-parent-vertx</artifactId>
-        <version>2.1.0</version>
+        <version>2.2.0</version>
     </parent>
 
     <modules>
@@ -19,7 +19,8 @@
 
     <properties>
         <!--Dependency versions-->
-        <guice.version>4.0</guice.version>
+        <guice.version>4.1.0</guice.version>
+        <vertx.version>3.3.0</vertx.version>
     </properties>
 
     <dependencies>
