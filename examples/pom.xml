@@ -13,6 +13,7 @@
 
     <modules>
         <module>vertx-guice-simple</module>
+        <module>vertx-guice-config</module>
     </modules>
 
     <dependencies>
