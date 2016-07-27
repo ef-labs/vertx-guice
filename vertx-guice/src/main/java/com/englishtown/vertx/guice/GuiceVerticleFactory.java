@@ -23,7 +23,6 @@
 
 package com.englishtown.vertx.guice;
 
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.vertx.core.Verticle;
 import io.vertx.core.impl.JavaVerticleFactory;
