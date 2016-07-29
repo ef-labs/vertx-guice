@@ -29,6 +29,7 @@ import javax.inject.Inject;
 
 public class DefaultMyDependency implements MyDependency {
 
+    @SuppressWarnings("unused")
     private final Vertx vertx;
 
     @Inject
