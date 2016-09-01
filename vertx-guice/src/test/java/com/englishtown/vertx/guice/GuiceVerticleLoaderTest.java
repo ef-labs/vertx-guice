@@ -25,7 +25,9 @@ package com.englishtown.vertx.guice;
 
 import com.englishtown.vertx.guice.integration.CustomBinder;
 import com.englishtown.vertx.guice.integration.DependencyInjectionVerticle;
+import com.englishtown.vertx.guice.integration.DummyVerticle;
 import com.google.common.collect.Lists;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.vertx.core.Context;
@@ -165,16 +167,30 @@ public class GuiceVerticleLoaderTest {
 
     @Test
     public void testStart_Class_Not_Found_Binder() throws Exception {
+        parent = null;
+        String binder = "com.englishtown.INVALID_BINDER";
+        config.put("guice_binder", binder);
 
+        String main = DummyVerticle.class.getName();
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        GuiceVerticleLoader loader = new GuiceVerticleLoader(main, cl, parent);
+        loader.init(vertx, context);
+        loader.start(future);
+        loader.stop(future);
+
+        verify(logger).warn(eq("Guice bootstrap binder class " + binder + " was not found.  Are you missing injection bindings?"));
+    }
+
+    @Test
+    public void testStart_Class_Not_Found_Binder_With_Parent() throws Exception {
         String binder = "com.englishtown.INVALID_BINDER";
         config.put("guice_binder", binder);
 
         String main = DependencyInjectionVerticle.class.getName();
         doTest(main);
 
-        verify(logger).error(eq("Guice bootstrap binder class " + binder + " was not found.  Are you missing injection bindings?"));
+        verifyZeroInteractions(logger);
         assertEquals(1, getModules().size());
-
     }
 
 }

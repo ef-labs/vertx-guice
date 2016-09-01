@@ -156,8 +156,10 @@ public class GuiceVerticleLoader extends AbstractVerticle {
                             + " does not implement Module.");
                 }
             } catch (ClassNotFoundException e) {
-                logger.error("Guice bootstrap binder class " + bootstrapName
-                        + " was not found.  Are you missing injection bindings?");
+                if (parent == null) {
+                    logger.warn("Guice bootstrap binder class " + bootstrapName
+                            + " was not found.  Are you missing injection bindings?");
+                }
             }
         }
 
