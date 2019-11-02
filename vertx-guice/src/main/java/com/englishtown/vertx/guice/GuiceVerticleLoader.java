@@ -87,9 +87,11 @@ public class GuiceVerticleLoader extends AbstractVerticle {
      * This is useful if your verticle deploys other verticles or modules and you don't want this verticle to
      * be considered started until the other modules and verticles have been started.
      *
+     * @deprecated Use {@link #start(Promise)} instead
      * @param startedResult When you are happy your verticle is started set the result
      * @throws Exception
      */
+    @Deprecated
     @Override
     public void start(Future<Void> startedResult) throws Exception {
         // Start the real verticle
@@ -97,16 +99,53 @@ public class GuiceVerticleLoader extends AbstractVerticle {
     }
 
     /**
+     * Start the verticle instance.
+     * <p>
+     * Vert.x calls this method when deploying the instance. You do not call it yourself.
+     * <p>
+     * A promise is passed into the method, and when deployment is complete the verticle should either call
+     * {@link io.vertx.core.Promise#complete} or {@link io.vertx.core.Promise#fail} the future.
+     *
+     * @param startPromise  the future
+     */
+    @Override
+    public void start(Promise<Void> startPromise) throws Exception {
+        // Start the real verticle
+        realVerticle.start(startPromise);
+    }
+
+    /**
      * Vert.x calls the stop method when the verticle is undeployed.
      * Put any cleanup code for your verticle in here
      *
+     * @deprecated Use {@link #stop(Promise)} instead
      * @throws Exception
      */
+    @Deprecated
     @Override
     public void stop(Future<Void> stopFuture) throws Exception {
         // Stop the real verticle
         if (realVerticle != null) {
             realVerticle.stop(stopFuture);
+            realVerticle = null;
+        }
+    }
+
+    /**
+     * Stop the verticle instance.
+     * <p>
+     * Vert.x calls this method when un-deploying the instance. You do not call it yourself.
+     * <p>
+     * A promise is passed into the method, and when un-deployment is complete the verticle should either call
+     * {@link io.vertx.core.Promise#complete} or {@link io.vertx.core.Promise#fail} the future.
+     *
+     * @param stopPromise  the future
+     */
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception {
+        // Stop the real verticle
+        if (realVerticle != null) {
+            realVerticle.stop(stopPromise);
             realVerticle = null;
         }
     }

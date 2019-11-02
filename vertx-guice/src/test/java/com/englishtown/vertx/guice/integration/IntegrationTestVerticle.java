@@ -77,6 +77,38 @@ public class IntegrationTestVerticle extends VertxTestBase {
         await();
     }
 
+
+    @Test
+    public void testDependencyInjection_PromiseStartMethod() throws Exception {
+
+        Injector parent = Guice.createInjector(new GuiceVertxBinder(vertx), new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(MyDependency.class).to(CustomMyDependency.class).in(Singleton.class);
+            }
+        });
+
+        getFactory().setInjector(parent);
+
+        DeploymentOptions options = new DeploymentOptions()
+                .setConfig(new JsonObject()
+                        .put(GuiceVerticleLoader.CONFIG_BOOTSTRAP_BINDER_NAME, NOPBinder.class.getName()));
+
+        deployVerticle(DependencyInjectionVerticle3.class, options).get();
+
+        vertx.eventBus()
+                .<String>send(DependencyInjectionVerticle3.EB_ADDRESS, null, result -> {
+                    if (result.succeeded()) {
+                        assertEquals(CustomMyDependency.class.getName(), result.result().body());
+                        testComplete();
+                    } else {
+                        fail(result.cause());
+                    }
+                });
+
+        await();
+    }
+
     @Test
     public void testDependencyInjection_Uncompiled() throws Exception {
         deployVerticle("UncompiledDIVerticle.java").get();

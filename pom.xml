@@ -20,7 +20,7 @@
     <properties>
         <!--Dependency versions-->
         <guice.version>4.1.0</guice.version>
-        <vertx.version>3.3.0</vertx.version>
+        <vertx.version>3.8.3</vertx.version>
     </properties>
 
     <dependencies>
